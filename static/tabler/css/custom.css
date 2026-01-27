@@ -1,0 +1,26 @@
+.modal {
+    display: block;
+    background-color: #3334;
+}
+.form-control.is-invalid, .was-validated .form-control:invalid{
+    background-image: None;
+}
+.btn-xs {
+    padding: 0 10px;
+    font-size: 0.875em;
+    font-weight: 400;
+}
+td.controls {
+    width:30px;
+    padding-right: 12px !important;
+}
+td.controls a {
+    width:26px;
+    padding: 0;
+}
+
+@media (min-width: 992px){
+    .modal-xl {
+        max-width: 920px;
+    }
+}

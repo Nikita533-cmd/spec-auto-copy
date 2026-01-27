@@ -1,0 +1,833 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page-header d-print-none">
+  <h2 class="page-title">
+    Расчет и определение оптимального состава спринклерных воздушных установок пожаротушения.
+  </h2>
+</div>
+<form id="CalcForm" name="CalcForm">
+  <div class="card mb-3">
+    <div class="card-header">
+      <h3 class="card-title">Исходные данные</h3>
+    </div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-lg-5">
+          <label class="form-label">Гидравлическое давление в дежурном режиме</label>
+          <div class="row">
+            <div class="col-4">
+              <div class="input-group">
+                <input type="number" name="Pgidr" min="0" step="0.01" class="form-control">
+                <span class="input-group-text">
+                  МПа
+                </span>
+              </div>
+            </div>
+            <div class="col-8">
+              <div class="form-range mb-2" id="p-gidr-slider"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2">
+          <label class="form-label">Расход, Q</label>
+          <div class="input-group">
+            <input type="number" id="Q_input" value="100" name="Q" min="0" step="1" class="form-control">
+            <select class="form-select" id="Q_demension"style="width: 60px;">
+              <option value="dmc">дм³/с</option>
+              <option value="mch">м³/ч</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-lg-2">
+          <label class="form-label">Мин. темп. воздуха</label>
+          <div class="input-group" style="width: 100px;">
+            <input type="number" name="T" min="-50" max="50" value="20" step="0.1" class="form-control">
+            <span class="input-group-text">
+              °C
+            </span>
+          </div>
+        </div>
+        <div class="col-lg-3">
+          <label class="form-label">Тип оросителя</label>
+          <select class="form-select" name="Dotv" id="Dotv">
+            {% for sprinkler in sprinklers %}
+              <option value="{{ sprinkler.get_str_diametr }}" data-mu="{{ sprinkler.get_str_mu }}">{{ sprinkler.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card mb-3">
+    <div class="card-header">
+      <h3 class="card-title">Объём воздушной секции</h3>
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <label class="form-label">Известен ли объём воздушной секции?</label>
+        <div class="form-selectgroup">
+          <label class="form-selectgroup-item">
+            <input type="radio" id="hideSections" name="sections" value="no" class="form-selectgroup-input" checked>
+            <span class="form-selectgroup-label">Да</span>
+          </label>
+          <label class="form-selectgroup-item">
+            <input type="radio" id="showSections" name="sections" value="yes" class="form-selectgroup-input">
+            <span class="form-selectgroup-label">Нет, требуется расчёт</span>
+          </label>
+        </div>
+      </div>
+      <div id="sections" class="hidden">
+        <h4>Участки трубопроводов</h4>
+        <div class="mb-3 row section-template">
+          <div class="col-2">
+            <div class="input-group">
+              <input type="number" name="L" min="0" step="0.001" class="form-control section-L">
+              <span class="input-group-text">
+                м
+              </span>
+            </div>
+            <small class="form-hint">Длина</small>
+          </div>
+          <div class="col-2">
+            <div class="input-group">
+              <input type="number" name="D" min="0" step="0.001" class="form-control section-D" style="min-width: 60px;">
+              <select class="form-select section-dimension">
+                <option value="0.001">мм</option>
+                <option value="1">м</option>
+              </select>
+            </div>
+            <small class="form-hint">Внутренний диаметр</small>
+          </div>
+          <div class="col-2">
+            <a href="#" class="btn btn-default removeSection">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              Удалить
+            </a>
+          </div>
+        </div>
+        <div id="newSectionsContainer"></div>
+        <div class="mb-3">
+          <a href="#" class="btn btn-info" id="sectionAdd">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-circle-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+              <circle cx="12" cy="12" r="9"></circle>
+              <line x1="9" y1="12" x2="15" y2="12"></line>
+              <line x1="12" y1="9" x2="12" y2="15"></line>
+            </svg>
+            Добавить ещё участок
+          </a>
+        </div>
+      </div>
+      <div class="mb-3 row">
+        <div class="col-4">
+          <label class="form-label">Объём воздушной секции, Vсекции, м³</label>
+          <div class="input-group" style="width: 150px">
+            <input type="number" name="Vsec" min="0" step="0.01" class="form-control">
+            <span class="input-group-text">
+              м³
+            </span>
+          </div>
+        </div>
+        <div class="col-4">
+          <label class="form-label">Количество эксгаустеров</label>
+          <div class="input-group" style="width: 100px">
+            <input type="number" name="N" min="0" step="1" value="0" class="form-control">
+            <span class="input-group-text">
+              шт
+            </span>
+          </div>
+        </div>
+        <div class="col-4">
+          <label class="form-label">Время заполнения системы ОТВ</label>
+          <div class="form-control-plaintext"><span style="white-space: nowrap;" class="tZap"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row row-cards mb-3 d-none" id="uu_results">
+    <div class="col-lg-4">
+      <div class="card" id="sprint_card">
+        <div class="card-status-top bg-success"></div>
+        <div class="card-status-top bg-danger"></div>
+        <div class="ribbon bg-green">подходит</div>
+        <div class="ribbon bg-red">не подходит</div>
+        <div class="card-header">
+          <h3 class="card-title" style="line-height: 48px;">УУ "Спринт"</h3>
+        </div>
+        <div class="card-body" id="sprint_results">
+          <p>Объём секции: <strong class="Vsec"></strong></p>
+          <p>Рекомендуемое количество эксгаустеров, не менее: 
+            <span style="white-space: nowrap;">
+              <strong class="N"></strong>
+               {% include "_helptext.html" with title="из расчета 1 эксгаустер на каждые 3 м³" %}
+            </span>
+          </p>
+          <p>Расчётное время заполнения секции ОТВ: <span class="tZap"></span> {% include "_helptext.html" with title="при условии использования рекомендуемого количества эксгаустеров" %}</p>
+          <p>Расчётное время срабатывания: <strong class="Tstr"></strong> (скорость снижения давления воздуха: <strong class="Speed_pad"></strong>) {% include "_helptext.html" with title="время срабатывания рассчитывается при условии обеспечения скорости снижения давления сжатого воздуха не менее 0,0007 МПа/с" %}</p>
+          <p>Пневматическое давление в дежурном режиме, не менее:
+            <div class="input-group input-group-flat" style="width: 160px;">
+              <input type="number" step="0.01" class="form-control Vpnevm_min" id="VpnevmSpirit">
+              <span class="input-group-text d-none" id="resetVpnevmSpirit">
+                <a href="#" class="link-secondary" title="Вернуть к рассчитанному значению">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg>
+                </a>
+              </span>
+              <span class="input-group-text" style="padding-left: 10px;">
+                МПа
+              </span>
+            </div>
+          </p>
+          <p>Расчётная инерционность системы: <span style="white-space: nowrap;"><strong class="Tin"></strong> {% include "_helptext.html" with title="рассчитывается по формуле: время срабатывания+время выхода насоса на режим+время заполнения секции ОТВ" %}</span></p>
+          <p>Расчетная производительность компрессора, не менее: <span style="white-space: nowrap;"><span class="Q"></span> {% include "_helptext.html" with title="рассчитывается с учетом требования по времени заполнения секции (не более 1 часа) по формуле Q=28*V*P, где Q – производительность компрессора, л/мин., V – объем воздушной секции, м3, P – пневматическое давление в дежурном режиме, атм." %}</span></p>          
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card" id="vozduh_card">
+        <div class="card-status-top bg-success"></div>
+        <div class="card-status-top bg-danger"></div>
+        <div class="ribbon bg-green">подходит</div>
+        <div class="ribbon bg-red">не подходит</div>
+        <div class="card-header">
+          <h3 class="card-title" style="line-height: 48px;">Воздушный УУ</h3>
+        </div>
+        <div class="card-body" id="vozduh_results">
+          <p>Объём секции: <strong class="Vsec"></strong></p>
+          <p>Рекомендуемое количество эксгаустеров, не менее: 
+            <span style="white-space: nowrap;">
+              <strong class="N"></strong>
+               {% include "_helptext.html" with title="из расчета 1 эксгаустер на каждые 3 м³" %}
+            </span>
+          </p>
+          <p>Расчётное время заполнения секции ОТВ: <span class="tZap"></span> {% include "_helptext.html" with title="при условии использования рекомендуемого количества эксгаустеров" %}</p>
+          <p>Расчетное давление срабатывания:<br /><strong class="Psrab"></strong>{% include "_helptext.html" with title="значение пневматического давление, ниже которого сработает акселератор" %}</span></p>
+          <p>Пневматическое давление в дежурном режиме, не менее:
+            <div class="input-group input-group-flat" style="width: 160px;">
+              <input type="number" id="Vpnevm_min_vozduh" step="0.01" class="form-control Vpnevm_min">
+              <span class="input-group-text d-none" id="resetVpnevmVozduh">
+                <a href="#" class="link-secondary" title="Вернуть к рассчитанному значению">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg>
+                </a>
+              </span>
+              <span class="input-group-text" style="padding-left: 10px;">
+                МПа
+              </span>
+            </div>
+          </p>
+          <p>Расчетное время срабатывания: <span style="white-space: nowrap;"><strong class="Tstr"></strong> {% include "_helptext.html" with title="время снижения давления воздуха до срабатывания УУ+время срабатывания УУ+время срабатывания акселератора" %}</span></p>
+          <p>Расчётная инерционность системы: <span style="white-space: nowrap;"><strong class="Tin"></strong> {% include "_helptext.html" with title="рассчитывается по формуле: время срабатывания+время выхода насоса на режим+время заполнения секции ОТВ" %}</span></p>
+          <p>Расчетная производительность компрессора, не менее: <span style="white-space: nowrap;"><span class="Q"></span> {% include "_helptext.html" with title="рассчитывается с учетом требования по времени заполнения секции (не более 1 часа) по формуле Q=28*V*P, где Q – производительность компрессора, л/мин., V – объем воздушной секции, м3, P – пневматическое давление в дежурном режиме, атм." %}</span></p>          
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card" id="vozduh_aa_card">
+        <div class="card-status-top bg-success"></div>
+        <div class="card-status-top bg-danger"></div>
+        <div class="ribbon bg-green">подходит</div>
+        <div class="ribbon bg-red">не подходит</div>
+        <div class="card-header">
+          <h3 class="card-title">Воздушный УУ<br />с акселератором</h3>
+        </div>
+        <div class="card-body" id="vozduh_aa_results">
+          <p>Объём секции: <strong class="Vsec"></strong></p>
+          <p>Рекомендуемое количество эксгаустеров, не менее: 
+            <span style="white-space: nowrap;">
+              <strong class="N"></strong>
+               {% include "_helptext.html" with title="из расчета 1 эксгаустер на каждые 3 м³" %}
+            </span>
+          </p>          <p>Расчётное время заполнения секции ОТВ: <span class="tZap"></span> {% include "_helptext.html" with title="при условии использования рекомендуемого количества эксгаустеров" %}</p>
+          <p>Расчетное давление срабатывания:<br /><strong class="Psrab"></strong> {% include "_helptext.html" with title="значение пневматического давление, ниже которого сработает акселератор" %}</span></p>
+          <p>Пневматическое давление в дежурном режиме, не менее:
+            <div class="input-group" style="width: 160px;">
+              <input type="number" id="Vpnevm_max_vozduhaa" step="0.01"  class="form-control Vpnevm_min">
+              <span class="input-group-text d-none" id="resetVpnevmVozduhaa">
+                <a href="#" class="link-secondary" title="Вернуть к рассчитанному значению">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg>
+                </a>
+              </span>
+              <span class="input-group-text" style="padding-left: 10px;">
+                МПа
+              </span>
+            </div>
+          </p>
+          <p>Расчетное время срабатывания: <span style="white-space: nowrap;"><strong class="Tstr"></strong> {% include "_helptext.html" with title="время снижения давления воздуха до срабатывания УУ+время срабатывания УУ+время срабатывания акселератора" %}</span></p>
+          <p>Расчётная инерционность системы: <span style="white-space: nowrap;"><strong class="Tin"></strong> {% include "_helptext.html" with title="рассчитывается по формуле: время срабатывания+время выхода насоса на режим+время заполнения секции ОТВ" %}</span></p>
+          <p>Расчетная производительность компрессора, не менее: <span style="white-space: nowrap;"><span class="Q"></span> {% include "_helptext.html" with title="рассчитывается с учетом требования по времени заполнения секции (не более 1 часа) по формуле Q=28*V*P, где Q – производительность компрессора, л/мин., V – объем воздушной секции, м3, P – пневматическое давление в дежурном режиме, атм." %}</span></p>          
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block extra %}
+<script>
+function PgidrSlider() {
+  /// показывем слайдер и привязываем его к полю Pgidr
+  let
+    Pgidr = document.forms.CalcForm.elements["Pgidr"],
+    slider = document.getElementById('p-gidr-slider');
+
+  noUiSlider.create(slider, {range: {'min': 0.14, 'max': 1.6}, step: 0.01, start: [0.9]});
+  slider.noUiSlider.on('update', (values) => {
+    Pgidr.value = values[0]
+    calculateTZap()
+  })
+  Pgidr.addEventListener('change', (e) => slider.noUiSlider.set(e.target.value))
+}
+
+function sections() {
+  // работа с объёмом воздушных секций
+  let
+    allSections = document.getElementsByClassName('section-template'),
+    showSections = document.getElementById('showSections'),
+    hideSections = document.getElementById('hideSections'),
+    sections = document.getElementById('sections'),
+    removeSection = document.querySelectorAll('.removeSection'),
+    sectionAdd = document.getElementById('sectionAdd');
+
+  hideSections.addEventListener('click', () => sections.style.display = 'none')
+  showSections.addEventListener('click', () => sections.style.display = 'block')
+  sectionAdd.addEventListener('click', (event) => {
+    const
+      newSectionsContainer = document.getElementById('newSectionsContainer');
+    let
+      newSection = allSections[allSections.length - 1].cloneNode(true)
+    newSectionsContainer.appendChild(newSection)
+    setSectionsInputEventListener()
+    calculateVsec()
+    event.preventDefault()
+  })
+  sections.addEventListener("click", function(event) {
+    const target = event.target.closest(".removeSection");
+
+    if (target) {
+      if (allSections.length > 1) target.parentNode.parentNode.remove()
+      calculateVsec()
+      event.preventDefault();
+    }
+  })
+  setSectionsInputEventListener()
+}
+
+function setSectionsInputEventListener() {
+  let inputs = document.querySelectorAll("#sections .section-template input")
+  for (let i = 0; i < inputs.length; i++) {
+    inputs[i].addEventListener("change", calculateVsec)
+  }
+  let selects = document.querySelectorAll("#sections .section-template select")
+  for (let i = 0; i < selects.length; i++) {
+    selects[i].addEventListener("change", calculateVsec)
+  }
+}
+
+function calculateVsec() {
+  let
+    section_rows = document.querySelectorAll("#sections .section-template"),
+    Vsec_input = document.forms.CalcForm.elements["Vsec"],
+    Vsec = 0;
+
+  for (let i = 0; i < section_rows.length; i++) {
+    let
+      L = parseFloat(section_rows[i].getElementsByClassName("section-L")[0].value),
+      D = parseFloat(section_rows[i].getElementsByClassName("section-D")[0].value),
+      dimension = parseFloat(section_rows[i].getElementsByClassName("section-dimension")[0].value);
+    if (L && D){
+      Vsec += (Math.PI * L * D * dimension) / 4;
+    }
+  }
+  Vsec_input.value = Vsec > 0 ? Vsec.toFixed(1) : "";
+  Vsec_input.dispatchEvent(new Event('change'));
+}
+
+function getQvalue(){
+  // расчёт расхода Q с учётом размерности
+  let
+    Q_input = document.forms.CalcForm.elements["Q"],
+    Q_demension = document.forms.CalcForm.elements["Q_demension"],  
+    Q_value = Q_input.value
+  if(!Q_value) return
+  if(Q_demension.value=="mch") Q_value = Q_value / 3.6
+  return Q_value
+}
+
+function getTin(Tstr){
+  // расчёт инерционности системы
+  // Общее время срабатывания УУ+время выхода насоса на режим+время заполнения
+  let
+    Vsec_input = document.forms.CalcForm.elements["Vsec"], // объём трубопровода
+    Q = getQvalue()
+  if(Tstr && Vsec_input && Q)
+    return Tstr + Vsec_input.value*1000/Q + Vsec_input.value*1000/(2.2*Q)
+  return
+}
+
+function calculateTZap(){
+  // время заполнения системы ОТВ
+  let
+    Q_value = getQvalue(),
+    tZap_el = document.querySelectorAll('.tZap'),
+    Vsec_el = document.querySelectorAll('.Vsec'),
+    Vsec_input = document.forms.CalcForm.elements["Vsec"]
+  document.querySelectorAll(".bg-primary-lt").forEach(el => el.classList.remove("bg-primary-lt"))
+  if(Vsec_input.value && Q_value) {
+    document.getElementById("uu_results").classList.remove("d-none")
+    let
+      Vsec_value = parseFloat(Vsec_input.value),
+      tZap = (Vsec_value * 1000 / Q_value).toFixed(0)
+    tZap_el.forEach(el => el.innerHTML = `<strong>${tZap} с</strong>`)
+    Vsec_el.forEach(el => el.innerText = `${Vsec_value} м³`)
+    calculateN()
+    calcSpirit()
+    calcVozduh()
+    calcVozduhaa()
+  } else {
+    document.getElementById("uu_results").classList.add("d-none")
+    tZap_el.forEach(el => el.innerText = "")
+    Vsec_el.forEach(el => el.innerText = ``)
+  }
+}
+
+function calculateN() {
+  // Количество эксгаустеров
+  let
+    N_input = document.forms.CalcForm.elements["N"],
+    N_el = document.querySelectorAll('.N'),
+    Vsec_input = document.forms.CalcForm.elements["Vsec"]
+
+  N_input.value = Math.floor(Vsec_input.value / 3)
+  N_el.forEach(el => el.innerText = `${N_input.value} шт`)
+}
+
+function setN() {
+  // ручная установка кол-ва эксгаустеров
+  let
+    N_input = document.forms.CalcForm.elements["N"],
+    N_el = document.querySelectorAll('.N'),
+    Vsec_input = document.forms.CalcForm.elements["Vsec"]
+  if(N_input.value < Vsec_input.value / 3){
+    N_input.value = Vsec_input.value / 3
+  }
+  N_el.forEach(el => el.innerText = `${N_input.value} шт`)
+}
+
+function calculateQ(Vpnevm_raw){
+  // Производительность компрессора
+  let 
+    Vsec_input = parseFloat(document.forms.CalcForm.elements["Vsec"].value), // объём трубопровода
+    Vpnevm = parseFloat(Vpnevm_raw),
+    Q = 280 * Vsec_input * Vpnevm
+  return `<strong>${Q.toFixed(0)} л/мин</strong>`
+}
+
+function calcSpirit(Vpnevm_start_value){
+  // Расчёт УУ "Спринт"
+  let 
+    Vsec_input = document.forms.CalcForm.elements["Vsec"], // объём трубопровода
+    T_input = document.forms.CalcForm.elements["T"], // температура воздуха
+    sprint_card_el =  document.getElementById('sprint_card'),
+    results_el = document.getElementById('sprint_results'),
+    Speed_pad_min = 0.0007, // минимально допустимая скорость падения давления воздуха
+    success = false,
+    Tstr = 12,              // время срабатывания
+    set_default_value = false, // нужно ли устанавливать дефолтное значение в поле дежурного давления
+    Tin = getTin(Tstr)     // инерционность
+
+  if(!Vpnevm_start_value) {
+    Vpnevm_start_value=0.2
+    set_default_value=true
+  }
+
+  let 
+    Vpnevm = Vpnevm_start_value,
+    Speed_pad
+
+  //console.log("** calc Spirit")
+
+  while (Vpnevm.toFixed(2) <= 0.6) {
+    Speed_pad = calculateTstrSpeed_pad(
+      Vpnevm-0.0001,
+      Vsec_input.value,
+      T_input.value,
+      Vpnevm
+    )[1]
+
+    //console.log("Vpnevm=", Vpnevm, "Speed_pad=", Speed_pad)
+
+    if(Speed_pad > Speed_pad_min && Tin <= 180){
+      success = true
+      break
+    }
+    Vpnevm += 0.01
+  }
+  if(Vpnevm > 0.6) Vpnevm = 0.6
+
+  let 
+      fixed_speed_pad = Speed_pad.toFixed(4),
+      fixed_speed_pad_min = Speed_pad_min.toFixed(4),
+      sign = ">"
+    
+  if(fixed_speed_pad == fixed_speed_pad_min) sign = "≥"
+  if(fixed_speed_pad < fixed_speed_pad_min) sign = "<"
+  results_el.querySelector('.Speed_pad').innerHTML = `<br />${fixed_speed_pad}&nbsp;МПа/с ${sign} ${fixed_speed_pad_min}&nbsp;МПа/c`
+
+  results_el.querySelector('.Tin').classList.remove("text-danger")
+
+  if(fixed_speed_pad >= fixed_speed_pad_min){
+    results_el.querySelector('.Speed_pad').classList.remove("text-danger")
+    results_el.querySelector('.Speed_pad').classList.add("text-success")
+    results_el.querySelector('.Tstr').innerText = `${Tstr} с`
+    if(Tin > 180){
+      results_el.querySelector('.Tin').innerText = `${Tin.toFixed(0)} с > 180 c.`
+      results_el.querySelector('.Tin').classList.add("text-danger")
+    } else {
+      results_el.querySelector('.Tin').innerText = `${Tin.toFixed(0)} с`
+    }
+  } else {
+    results_el.querySelector('.Speed_pad').classList.add("text-danger")
+    results_el.querySelector('.Speed_pad').classList.remove("text-success")
+    results_el.querySelector('.Tin').innerText = `-`
+    results_el.querySelector('.Tstr').innerText = `-`
+  }
+
+
+
+
+  if(set_default_value){
+    document.getElementById('resetVpnevmSpirit').dataset["default_value"] = Vpnevm.toFixed(2)
+  }
+  results_el.querySelector('.Vpnevm_min').value = Vpnevm.toFixed(2)
+  results_el.querySelector('.Q').innerHTML = calculateQ(Vpnevm)
+
+  if(success){
+    sprint_card_el.classList.add("uu-success")
+    sprint_card_el.classList.remove("uu-error")
+  } else {
+    sprint_card_el.classList.add("uu-error")
+    sprint_card_el.classList.remove("uu-success")
+  }
+}
+
+function calcVozduh(Pdezh_start_value){
+  // Расчёт УУ "Воздушный"
+  let 
+    Pgidr_input = document.forms.CalcForm.elements["Pgidr"], // гидравлическое давление
+    Vsec_input = document.forms.CalcForm.elements["Vsec"], // объём трубопровода
+    T_input = document.forms.CalcForm.elements["T"], // температура воздуха
+    vozduh_card_el =  document.getElementById('vozduh_card'),
+    results_el = document.getElementById('vozduh_results')
+    Q_value = getQvalue(),
+    success = false,
+    Psrab = Pgidr_input.value / 5,
+    set_default_value = false // нужно ли устанавливать дефолтное значение в поле дежурного давления
+
+  if(!Pdezh_start_value){
+    Pdezh_start_value = Psrab + 0.05
+    if(Pdezh_start_value < 0.2) Pdezh_start_value = 0.2
+    set_default_value = true
+  }
+
+  //console.log("*** calcVozduh")
+
+  let 
+    Speed_pad,
+    Pdezh = Pdezh_start_value
+
+  while (Pdezh.toFixed(2) <= 0.6) {
+    let 
+      results = calculateTstrSpeed_pad(Psrab, Vsec_input.value, T_input.value, Pdezh)
+      Tstr = results[0] + 2,
+      Tin = getTin(Tstr)
+    //console.log("Psrab=", Psrab, "Pdezh=", Pdezh, "Tin=", Tin)
+
+    if(Tin <= 180){
+      success = true
+      break
+    }
+    Pdezh += 0.01
+  }
+
+  if(!success){
+    // пересчитываем по минимальным значениям и подсвечиваем красным
+    Pdezh = Pdezh_start_value
+    Psrab = Pgidr_input.value / 5
+    results = calculateTstrSpeed_pad(Psrab, Vsec_input.value, T_input.value, Pdezh)
+    Tstr = results[0] + 2,
+    Tin = getTin(Tstr)
+  }
+
+  results_el.querySelector('.Psrab').innerText = `${Psrab.toFixed(2)} МПа`
+  results_el.querySelector('.Vpnevm_min').value = Pdezh.toFixed(2)
+
+  results_el.querySelector('.Tstr').innerText = `${Tstr.toFixed(0)} с`
+
+  if(Tin <= 180){
+    results_el.querySelector('.Tin').innerText = `${Tin.toFixed(0)} с`
+    results_el.querySelector('.Tin').classList.remove("text-danger")
+  } else {
+    results_el.querySelector('.Tin').innerText = `${Tin.toFixed(0)} с > 180 c.`
+    results_el.querySelector('.Tin').classList.add("text-danger")
+  }
+  results_el.querySelector('.Q').innerHTML = calculateQ(Pdezh)
+
+  if(success){
+      vozduh_card_el.classList.add("uu-success")
+      vozduh_card_el.classList.remove("uu-error")
+  } else {
+    vozduh_card_el.classList.add("uu-error")
+    vozduh_card_el.classList.remove("uu-success")
+  }
+}
+
+
+function calcVozduhaa(Pdezh_start_value){
+  // Расчёт УУ "Воздушный"
+  let 
+    Vsec_input = document.forms.CalcForm.elements["Vsec"], // объём трубопровода
+    Pgidr_input = document.forms.CalcForm.elements["Pgidr"], // гидравлическое давление
+    T_input = document.forms.CalcForm.elements["T"], // температура воздуха
+    results_el = document.getElementById('vozduh_aa_results'),
+    vozduh_aa_card_el =  document.getElementById('vozduh_aa_card'),
+    Q_value = getQvalue(),
+    Psrab_min = Pgidr_input.value / 5,
+    Psrab = 0.35,
+    Pdezh = Psrab + 0.05,
+    tZap = (Vsec_input.value * 1000 / Q_value),
+    success = false
+
+
+  if(Pdezh_start_value) {
+    Psrab = Pdezh_start_value - 0.05
+  } else {
+    Psrab = 0.35 // минимальное давление срабатывания
+    Pdezh_start_value = Psrab + 0.05
+    set_default_value=true
+  }
+
+  //console.log("*** calcVozduhaa")
+
+  if(T_input.value && Vsec_input.value){
+    // первый этап, понижаем давление
+    while (Psrab.toFixed(2) >= Psrab_min) {
+      Pdezh = Psrab + 0.05
+
+      let 
+        results = calculateTstrSpeed_pad(Psrab, Vsec_input.value, T_input.value, Pdezh)
+        Tstr = results[0] + 2 + 2, // время срабатывания
+        Tin = getTin(Tstr)         // инерционность
+
+      //console.log("Psrab=", Psrab, "Tstr=", Tstr, "Tin=", Tin)
+      if(Tin < 180){
+        success = true
+        break
+      }
+      Psrab -= 0.01
+    }
+
+    if(!success){
+      // второй этап, поднимаем давление
+      Psrab = 0.4
+      while (Psrab.toFixed(2) <= 0.55) {
+        Pdezh = Psrab + 0.05
+
+        let 
+          results = calculateTstrSpeed_pad(Psrab, Vsec_input.value, T_input.value, Pdezh)
+          Tstr = results[0] + 2 + 2, // время срабатывания
+          Tin = getTin(Tstr)         // инерционность
+
+        //console.log("Psrab=", Psrab, "Tstr=", Tstr, "Tin=", Tin)
+        if(Tin < 180){
+          success = true
+          break
+        }
+        Psrab += 0.01
+      }
+    }
+
+    if(!success){
+      // пересчитываем по минимальным значениям и подсвечиваем красным
+      Pdezh = Pdezh_start_value
+      Psrab = Pdezh_start_value - 0.05
+      results = calculateTstrSpeed_pad(Psrab, Vsec_input.value, T_input.value, Pdezh)
+      Tstr = results[0] + 2 + 2, // время срабатывания
+      Tin = getTin(Tstr)         // инерционность
+    }
+
+    results_el.querySelector('.Tstr').innerText = `${Tstr.toFixed(0)} с`
+
+    results_el.querySelector('.Psrab').innerText = `${Psrab.toFixed(2)} МПа`
+    results_el.querySelector('.Vpnevm_min').value = Pdezh.toFixed(2)
+    results_el.querySelector('.Q').innerHTML = calculateQ(Pdezh)
+
+    if(Tin <= 180){
+      results_el.querySelector('.Tin').innerText = `${Tin.toFixed(0)} с`
+      results_el.querySelector('.Tin').classList.remove("text-danger")
+    } else {
+      results_el.querySelector('.Tin').innerText = `${Tin.toFixed(0)} с > 180 c`
+      results_el.querySelector('.Tin').classList.add("text-danger")
+    }
+
+    if(success){
+        vozduh_aa_card_el.classList.add("uu-success")
+        vozduh_aa_card_el.classList.remove("uu-error")
+    } else {
+      vozduh_aa_card_el.classList.add("uu-error")
+      vozduh_aa_card_el.classList.remove("uu-success")
+    }
+  }
+}
+
+function calculateTstrSpeed_pad(Vpnevm, Vsec, T, Vpnevm_min){
+  T = parseInt(T) // Температура воздуха
+  let
+    Dotv_input = document.getElementById('Dotv'), // диаметр отверстия оросителя
+    Sotv = 0.785 * Math.pow(Dotv_input.value / 1000, 2), // площадь отверстия
+
+    Mu = parseFloat(Dotv_input.options[Dotv_input.selectedIndex].dataset.mu), // Коэффициент расхода μ отверстия или насадки (оросителя)
+    k = 1.41, // Показатель адиабаты воздуха
+    KpotM = 5, // коэффициент местных потерь давления %,
+    KpotL = 5, // коэффициент линейных потерь давления %,
+    Patm = 100000, // атмосферное давление в Па
+    Ro_atm = 353 / (273.15 + T), // плотность атмосферного воздуха
+    Vpnevm_atm = Vpnevm * 10,
+    Vpnevm_min_atm = Vpnevm_min * 10,
+    P1 = Vpnevm_min_atm * 100000 + 100000,
+    P2 = Vpnevm_atm * 100000 + 100000,
+    V1 = Vsec * P1 / Patm,
+    V2 = Vsec * P2 / Patm,
+    Vstr = V1 - V2, // объем стравливаемого воздуха (имхо баг какой-то расчётов, Vsec_input.value / 1000)
+    Mstr = Vstr * Ro_atm,     // масса стравливаемого воздуха
+
+
+    Ro1 = Ro_atm * P1 / Patm,
+    Ro2 = Ro_atm * P2 / Patm,
+    Rosr = (Ro2 + Ro1) / 2,
+
+    Pvihpot = P1 - P1*(KpotM/100) - P1*(KpotL/100), // учёт потерь давления
+    Mt = Mu * Sotv * Math.sqrt(2*k/(k-1) * Pvihpot * Rosr * (Math.pow(P2/Pvihpot, 2/k) - Math.pow(P2/P1, (k+1)/k))),
+    Tstr = Mstr / Mt,       // время стравливания
+    Speed_pad = 0.001/(9.8692327 * Tstr) // скорость падения давления 
+  /*
+  console.log("Vpnevm_atm=", Vpnevm_atm)
+  console.log("Vpnevm_min_atm=", Vpnevm_min_atm)
+  console.log("P1=",P1," P2=", P2)
+  console.log("V1=",V1," V2=", V2)
+  console.log("Ro_atm=", Ro_atm)
+  console.log("Rosr=", Rosr)
+  console.log("Pvihpot=", Pvihpot)
+  console.log("Sotv=", Sotv)
+  console.log("Mt=", Mt)
+  console.log("Mstr=", Mstr)
+  console.log("Tstr=", Tstr)
+  console.log("Speed_pad=", Speed_pad)
+  */
+
+  return [Tstr, Speed_pad]
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  PgidrSlider()
+  sections()
+
+  document.forms.CalcForm.elements["N"].addEventListener("change", setN)
+  document.forms.CalcForm.elements["Vsec"].addEventListener("change", calculateTZap)
+  document.getElementById('Q_input').addEventListener("change", calculateTZap)
+  document.forms.CalcForm.elements["T"].addEventListener("change", calculateTZap)
+  document.getElementById('Dotv').addEventListener("change", calculateTZap)
+  document.getElementById('Q_demension').addEventListener("change", calculateTZap)
+  document.forms.CalcForm.elements["Pgidr"].addEventListener("change", calculateTZap)
+  document.getElementById("CalcForm").addEventListener("submit", (event) => event.preventDefault())
+
+  document.getElementById("VpnevmSpirit").addEventListener("change", (event) => {
+    document.getElementById('resetVpnevmSpirit').classList.remove("d-none")
+    let Vpnevm_min = parseFloat(event.target.value)
+    if(Vpnevm_min > 0.6) {Vpnevm_min=0.6;event.target.value = 0.6}
+    if(Vpnevm_min < 0.2) {Vpnevm_min=0.2;event.target.value = 0.2}
+    calcSpirit(Vpnevm_min)
+  })
+
+  document.querySelector("#resetVpnevmSpirit a").addEventListener("click", (event) => {
+    let Vpnevm_min = parseFloat(document.getElementById('resetVpnevmSpirit').dataset["default_value"])
+    document.getElementById('resetVpnevmSpirit').classList.add("d-none")
+    calcSpirit(Vpnevm_min)
+    event.preventDefault()
+  })
+
+  document.getElementById("Vpnevm_min_vozduh").addEventListener("change", (event) => {
+    document.getElementById('resetVpnevmVozduh').classList.remove("d-none")
+    let
+     Vpnevm_min = parseFloat(event.target.value),
+     Pgidr_input = document.forms.CalcForm.elements["Pgidr"], // гидравлическое давление
+     Psrab = Pgidr_input.value / 5 + 0.05
+
+    if(Vpnevm_min > 0.6) {Vpnevm_min=0.6;event.target.value = 0.6}
+    if(Vpnevm_min < Psrab) {Vpnevm_min=Psrab;event.target.value = Psrab}
+    if(Vpnevm_min < 0.2) {Vpnevm_min=0.2;event.target.value = 0.2}
+    calcVozduh(Vpnevm_min)
+  })
+
+  document.querySelector("#resetVpnevmVozduh a").addEventListener("click", (event) => {
+    let 
+      Vpnevm_min = parseFloat(document.getElementById('resetVpnevmVozduh').dataset["default_value"])
+
+    document.getElementById('resetVpnevmVozduh').classList.add("d-none")
+    calcVozduh(Vpnevm_min)
+    event.preventDefault()
+  })
+
+  document.getElementById("Vpnevm_max_vozduhaa").addEventListener("change", (event) => {
+    document.getElementById('resetVpnevmVozduhaa').classList.remove("d-none")
+    let 
+      Vpnevm_min = parseFloat(event.target.value),
+      Pgidr_input = document.forms.CalcForm.elements["Pgidr"], // гидравлическое давление
+      Psrab = Pgidr_input.value / 5 + 0.05
+
+    if(Vpnevm_min > 0.6) {Vpnevm_min=0.6;event.target.value = 0.6}
+    if(Vpnevm_min < Psrab) {Vpnevm_min=Psrab;event.target.value = Psrab}
+    if(Vpnevm_min < 0.2) {Vpnevm_min=0.2;event.target.value = 0.2}
+    calcVozduhaa(Vpnevm_min)
+  })
+
+  document.querySelector("#resetVpnevmVozduhaa a").addEventListener("click", (event) => {
+    let Vpnevm_min = parseFloat(document.getElementById('resetVpnevmVozduhaa').dataset["default_value"])
+    document.getElementById('resetVpnevmVozduhaa').classList.add("d-none")
+    calcVozduhaa(Vpnevm_min)
+    event.preventDefault()
+  })
+
+
+
+
+  document.querySelectorAll("input[type=number]").forEach(function(element) {
+    element.addEventListener("mousewheel", (event) => event.preventDefault())
+
+    element.addEventListener("keydown", (event) => {
+      if (event.keyCode === 38 || event.keyCode === 40) {
+        event.preventDefault();
+      }
+    })
+  })
+
+  /*
+  let
+    form = document.forms.CalcForm,
+    formdata = new FormData(form),
+  */
+
+});
+
+</script>
+
+<style>
+  .input-group-text {background-color: #fff !important}
+  .uu-success .bg-red {display: none}
+  .uu-success .bg-danger {display: none}
+  .uu-error .card-title {color: #626976 !important;}
+  span.badge {flex-wrap: wrap; height: 16px; color: #666; border-color: #666;margin-left: 1em;}
+</style>
+{% endblock %}

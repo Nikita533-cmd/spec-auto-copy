@@ -1,0 +1,17 @@
+{% load static %}
+<footer class="mt-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+    <a href="https://sa-biysk.ru/" class="d-flex align-items-center me-lg-auto" style="height: 96px;margin-left:15px">
+      <img src="{% static 'images/logo_small.svg' %}" height="50" role="img" aria-label="Спецавтоматика" />
+    </a>
+    <div class="d-none d-sm-block">
+      <ul class="nav col-12 col-lg-auto my-2 justify-content-center my-md-0 text-small">
+        <li>
+          <span class="nav-link text-white">
+            © 1972 - {% now "Y" %} ЗАО «ПО «Спецавтоматика»
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Калькулятор интенсивности орошения{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="https://sa-biysk.ru/" class="grey-dark">
+          <img src="{% static 'images/icons/home.png' %}" style="margin-bottom: 2px;">
+          Главная
+        </a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">Калькуляторы</li>
+    </ol>
+  </nav>
+</div>
+
+<div class="container my-4">
+  <h1>Калькулятор расчета средней интенсивности орошения</h1>
+</div>
+
+<div class="container container-gray" style="min-height: 600px;">
+  <div class="row" style="width: 100%">
+    <div class="col-xl-6">
+      <div class="white-box">
+        <h4 class="my-4">Параметры помещения:</h4>
+
+        <form id="calc-form">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="row my-4">
+                <label for="group" class="col-sm-8 col-form-label">Группа защищаемого помещения</label>
+                <div class="col-sm-4">
+                  <select class="form-select auto-update" id="group" name="group" required>
+                    <option></option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4.1">4.1</option>
+                    <option value="4.2">4.2</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row my-4">
+                <label for="height-input" class="col-sm-8 col-form-label">Высота помещения, м</label>
+                <div class="col-sm-4">
+                  <input type="number" class="form-control auto-update" id="height-input" name="height" required min="2" max="20" step="0.1" value="7.00">
+                </div>
+              </div>
+
+              <div id="height_slider_block">
+                <div class="mb-2" id="height-slider"></div>
+                <div class="row">
+                  <div class="col-6 text-gray">2</div>
+                  <div class="col-6 text-end text-gray">20</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="row my-4">
+                <label for="otv" class="col-sm-8 col-form-label">Вид огнетушащего вещества (ОТВ)</label>
+                <div class="col-sm-4">
+                  <select class="form-select auto-update" id="otv" name="otv" required>
+                    <option></option>
+                    <option value="water">вода</option>
+                    <option value="foam">раствор пенообразователя</option>
+                    <option value="water_plus">вода со смачивателем</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row my-4">
+                <label for="sklad_height" class="col-sm-8 col-form-label">Высота складирования, м</label>
+                <div class="col-sm-4">
+                  <input type="number" class="form-control auto-update" id="sklad_height" name="sklad_height" required disabled min="0" max="5.5" value="0" step="0.1">
+                </div>
+              </div>
+
+              <div id="sklad_height_slider_block" class="d-none">
+                <div class="mb-2" id="sklad_height_slider"></div>
+                <div class="row">
+                  <div class="col-6 text-gray">0</div>
+                  <div class="col-6 text-end text-gray">5.5</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row my-4">
+            <div class="col-md-6 d-grid">
+              <button type="submit" class="btn btn-primary">Рассчитать</button>
+            </div>
+            <div class="col-md-6 d-grid">
+              <button type="reset" class="btn btn-secondary">Сбросить</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="white-box d-none" id="results-block">
+        <h4 class="my-4">Результат расчёта</h4>
+        <div class="row my-4 gray-box">
+          <div class="col-md-7 text-center">
+            <label class="col-form-label" style="line-height: 50px;">
+              Требуемая интенсивность орошения (Iн)
+            </label>
+          </div>
+          <div class="col-md-5">
+            <h4 class="text-center" id="required_irrigation_intensity"></h4>
+          </div>
+        </div>
+      </div>
+
+      <div class="white-box d-none" style="min-height: 482px;" id="graph-container">
+        <h4 class="my-4 text-center">График зависимости средней интенсивности от давления</h4>
+        <div><canvas id="chart"></canvas></div>
+        <div class="my-2">
+          <a href="https://sa-biysk.ru/" class="btn btn-primary" style="width: 150px">Назад</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-6 pb-3">
+      <div class="white-box d-none" style="height: 100%;" id="sprinklers-block">
+        <h4 class="my-4">Выберите ороситель</h4>
+
+        <div class="row my-4">
+          <div class="col-md-6 row">
+            <label class="col-sm-8 col-form-label">Наличие теплового замка</label>
+            <div class="col-sm-4">
+              <select class="form-select auto-update" id="thermal_lock" name="thermal_lock" required>
+                <option value="">Все</option>
+                <option value="sprinkler">спринклерные</option>
+                <option value="drench">дренчерные</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-6 row">
+            <label class="col-sm-8 col-form-label">Монтажное положение</label>
+            <div class="col-sm-4">
+              <select class="form-select auto-update" id="mounting_position" name="mounting_position" required>
+                <option value="">Все</option>
+                <option value="vertical_up">вертикально вверх</option>
+                <option value="vertical_down">вертикально вниз</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="gray-box">
+          <form>
+            <table class="table" id="sprinklers-list">
+              <thead>
+                <tr>
+                  <th class="align-middle">Тип оросителя</th>
+                  <th class="align-middle text-center d-none d-sm-block">Нормативная интенсивность Iн,<br /> не менее, дм&sup3;/(с·м&sup2;)</th>
+                  <th class="align-middle text-center">Рабочее давление Pн, МПа</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

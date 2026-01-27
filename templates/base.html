@@ -1,0 +1,37 @@
+{% load static %}
+<!doctype html>
+<html lang="ru" data-bs-theme="auto">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{ seo_settings.meta_tags|safe }}
+    <title>{% block title %}Спецавтоматика{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+    <link href="{% static '/bootstrap/assets/dist/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'nouislider/nouislider.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/styles2.css' %}?_v08" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="76x76" href="{% static '/favicon/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static '/favicon/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static '/favicon/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static '/favicon/site.webmanifest' %}">
+    <link rel="mask-icon" href="{% static '/favicon/safari-pinned-tab.svg' %}" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+  </head>
+  <body>
+    <main>
+      {% include 'header.html' %}
+      {% block content %}{% endblock %}
+      {% include 'footer.html' %}
+    </main>
+    <script src="{% static 'bootstrap/assets/dist/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'nouislider/nouislider.min.js' %}"></script>
+    <script src="{% static 'js/chart.min.js' %}"></script>
+    {% if view == "new" %}
+      <script src="{% static 'js/new.js' %}?_v26"></script>
+    {% else %}
+      <script src="{% static 'js/main.js' %}?_v21"></script>
+    {% endif %}
+    {{ seo_settings.counters|safe }}
+  </body>
+</html>

@@ -1,0 +1,29 @@
+version: "3.5"
+
+services:
+    django:
+        build:
+            dockerfile: etc/django.Dockerfile
+            context: .
+        command: uwsgi --http :8000  --processes 1 --threads 2 --module main.wsgi
+        ports:
+            - 127.0.0.1:${DJANGO_PORT}:8000
+        environment:
+            - C_FORCE_ROOT=true
+        volumes:
+            - .:/webapp
+            - ../static:/static
+            - ../media:/media
+        restart: always
+    redis:
+        image: redis:6.2.4-alpine
+        volumes:
+            - redis-volume:/redis-data
+        ports:
+            - 127.0.0.1::6379
+        restart: always
+
+volumes:
+    redis-volume:
+    static:
+    public:

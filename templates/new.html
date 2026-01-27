@@ -1,0 +1,465 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Онлайн конфигуратор расчета автоматических установок пожаротушения (АУП){% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="https://sa-biysk.ru/" class="grey-dark">
+          <img src="{% static 'images/icons/home.png' %}" style="margin-bottom: 2px;">
+          Главная
+        </a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">Калькуляторы</li>
+    </ol>
+  </nav>
+</div>
+
+<div class="container my-4">
+  <h1>Конфигуратор расчета АУП</h1>
+</div>
+
+<div class="container container-gray">
+  <div class="row" style="width: 100%">
+    <div class="col-xl-6">
+      <div class="white-box" style="min-height: 375px;">
+        <h4 class="my-4">Параметры помещения:</h4>
+
+        <form id="calc-form">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="row my-4">
+                <label for="group" class="col-sm-8 col-form-label">Группа защищаемого помещения</label>
+                <div class="col-sm-4 align-middle">
+                  <select class="form-select auto-update" id="group" name="group" required>
+                    <option></option>
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                    <option value="4.1">4.1</option>
+                    <option value="4.2">4.2</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row my-4">
+                <label for="height-input" class="col-sm-8 col-form-label">Высота помещения, м</label>
+                <div class="col-sm-4 align-middle">
+                  <input type="number" class="form-control auto-update" id="height-input" name="height" required min="2" max="20" step="0.1" value="7.00">
+                </div>
+              </div>
+
+              <div id="height_slider_block">
+                <div class="mb-2" id="height-slider"></div>
+                <div class="row">
+                  <div class="col-6 text-gray">2</div>
+                  <div class="col-6 text-end text-gray">20</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="row my-4">
+                <label for="otv" class="col-sm-6 col-form-label">Вид огнетушащего вещества (ОТВ)</label>
+                <div class="col-sm-6 align-middle">
+                  <select class="form-select auto-update" id="otv" name="otv" required>
+                    <option></option>
+                    <option value="water" selected>вода</option>
+                    <option value="foam">раствор пенообразователя</option>
+                    <option value="water_plus">вода со смачивателем</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row my-4">
+                <label for="sklad_height" class="col-sm-8 col-form-label">Высота складирования, м</label>
+                <div class="col-sm-4 align-middle">
+                  <input type="number" class="form-control auto-update" id="sklad_height" name="sklad_height" required disabled min="0" max="5.5" value="0" step="0.1">
+                </div>
+              </div>
+
+              <div id="sklad_height_slider_block" class="d-none">
+                <div class="mb-2" id="sklad_height_slider"></div>
+                <div class="row">
+                  <div class="col-6 text-gray">0</div>
+                  <div class="col-6 text-end text-gray">5.5</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row my-4">
+            <div class="col-md-6">
+              <div class="row">
+                <label for="temp-input" class="col-sm-8 col-form-label">Минимальная температура воздуха, °С</label>
+                <div class="col-sm-4 align-middle">
+                  <input type="number" class="form-control auto-update" id="temp-input" name="temp" required min="10" max="30" value="20">
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="row">
+                <label for="installation-type" class="col-sm-6 col-form-label">Тип установки пожаротушения</label>
+                <div class="col-sm-6 align-middle">
+                  <select class="form-select" id="installation-type" required>
+                    <option value=""></option>
+                    <option value="sprinkler_water" selected>спринклерная водозаполненая</option>
+                    <option value="sprinkler_air">спринклерная воздушная</option>
+                    <option value="drench">дренчерная</option>
+                </select>
+                </div>
+              </div>
+             </div>
+          </div>
+          <div class="row my-4">
+            <div class="col-md-6 d-grid">
+              <button type="submit" class="btn btn-primary">Рассчитать</button>
+            </div>
+            <div class="col-md-6 d-grid">
+              <button type="reset" class="btn btn-secondary">Сбросить</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-xl-6">
+      <div class="white-box" style="min-height: 375px;">
+        <h4 class="my-4">Параметры АУП:</h4>
+
+        <form id="calc-form-aup" class="mt-5">
+          <div class="row my-4">
+            <div class="col-md-12">
+              <div class="row">
+                <label for="group" class="col-sm-6">Требуемая интенсивность орошения (Iн)</label>
+                <div class="col-sm-6 align-middle text-bold" id="intensity"></div>
+              </div>
+             </div>
+          </div>
+
+          <div class="row my-4">
+            <div class="col-md-6">
+              <div class="row">
+                <label for="group" class="col-sm-6">Расход ОТВ</label>
+                <div class="col-sm-6 align-middle text-bold" id="Q_el" nowrap></div>
+              </div>
+             </div>
+            <div class="col-md-6">
+              <div class="row">
+                <label for="group" class="col-sm-6">Продолжительность подачи ОТВ</label>
+                <div class="col-sm-6 align-middle text-bold" id="duration_el" nowrap></div>
+              </div>
+             </div>
+          </div>
+
+          <div class="row my-4">
+            <div class="col-md-6">
+              <div class="row">
+                <label for="group" class="col-sm-8">Нормативная площадь, не менее</label>
+                <div class="col-sm-4 align-middle text-bold" id="S_el"></div>
+              </div>
+             </div>
+            <div class="col-md-6">
+              <div class="row">
+                <label for="group" class="col-sm-8">Максимальное расстояние между оросителями</label>
+                <div class="col-sm-4 align-middle text-bold" id="distance_el"></div>
+              </div>
+             </div>
+          </div>
+
+          <div class="row my-4">
+           </div>
+
+          <div class="row my-4" style="display: none">
+
+
+            <div class="col-md-6">
+                <div class="row">
+                  <label for="group" class="col-sm-8 col-form-label">Гидравлическое давление в дежурном режиме, МПа</label>
+                  <div class="col-sm-4 align-middle">
+                    <input type="number" class="form-control" required min="0.14" max="1.6" step="0.01" value="0.90" id="p_gidr_input">
+                  </div>
+                </div>
+
+                <div id="p_gidr_slider_block" class="my-4">
+                  <div class="mb-2" id="p_gidr_slider"></div>
+                  <div class="row">
+                    <div class="col-6 text-gray">0.14</div>
+                    <div class="col-6 text-end text-gray">1.6</div>
+                  </div>
+                </div>
+
+             </div>
+          </div>
+
+
+          <div class="row my-4">
+            <div class="col-md-6">
+              <div class="row">
+                <label for="group" class="col-sm-6 col-form-label">Тип оросителя</label>
+                <div class="col-sm-6 align-middle">
+                  <select class="form-select" required id="sprinklers-select">
+                    <option></option>
+                  </select>
+                </div>
+              </div>
+             </div>
+          </div>
+
+          <div class="row my-4">
+            <div class="col-md-6">
+              <div class="row">
+                <label for="group" class="col-sm-8">Давление на оросителе</label>
+                <div class="col-sm-4 align-middle text-bold" id="H"></div>
+              </div>
+             </div>
+            <div class="col-md-6">
+              <div class="row">
+                <label for="group" class="col-sm-8">Расход через ороситель</label>
+                <div class="col-sm-4 align-middle text-bold" id="Q1"></div>
+              </div>
+             </div>
+          </div>
+
+          <div class="row my-4">
+            <div class="col-md-12">
+              <div class="row">
+                <label for="group" class="col-sm-8">Коэффициент производительности оросителя</label>
+                <div class="col-sm-4 align-middle text-bold" id="sprinkler_K"></div>
+              </div>
+             </div>
+            <div class="col-md-6">
+             </div>
+          </div>
+
+          <!-- График оросителя -->
+          <div class="row my-4 d-none" id="sprinkler-chart-container">
+            <div class="col-md-12">
+              <h5 class="text-center mb-3">График зависимости интенсивности орошения от давления</h5>
+              <div style="max-width: 800px; margin: 0 auto;">
+                <canvas id="sprinkler-chart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="row my-4">
+            <div class="col-md-6">
+              <div class="row">
+                <label for="inlet-pressure-input" class="col-sm-8 col-form-label">Давление на входе пожарного насоса, МПа</label>
+                <div class="col-sm-4 align-middle">
+                  <input type="number" class="form-control" id="inlet-pressure-input" name="inlet-pressure" step="0.01" value="0.00" min="0" max="1">
+                </div>
+              </div>
+             </div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+
+  <div class="row" style="width: 100%">
+    <div class="col-xl-12">
+      <div class="white-box">
+
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="add-branch-btn" type="button">+ Добавить ветвь</button>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent"></div>
+
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="row" style="width: 100%; margin-top: 30px;">
+    <div class="col-xl-12">
+      <div class="white-box">
+        <h4 class="my-4">Питающий трубопровод:</h4>
+
+        <div class="gray-box">
+          <form id="calc-form-feed-pipe">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="row my-4">
+                  <label for="feed-pipe-length" class="col-sm-8 col-form-label">Длина питающего трубопровода, м</label>
+                  <div class="col-sm-4">
+                    <input type="number" class="form-control" id="feed-pipe-length" required min="0" step="0.1" value="0">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="row my-4">
+                  <label for="feed-pipe-type" class="col-sm-4 col-form-label">Тип трубы</label>
+                  <div class="col-sm-8">
+                    <select class="form-select" name="TubeType" id="feed-pipe-type">
+                      <option value=""></option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="row my-4">
+                  <label for="feed-pipe-params" class="col-sm-4 col-form-label">Параметры трубы</label>
+                  <div class="col-sm-8">
+                    <select class="form-select" id="feed-pipe-params"></select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row my-4" id="kt-value-row-feed-pipe">
+              <div class="col-md-6">
+                <div class="row">
+                  <label for="feed-pipe-kt" class="col-sm-4 col-form-label">Удельная характеристика K</label>
+                  <div class="col-sm-8" id="feed-pipe-kt" nowrap></div>
+                </div>
+              </div>
+            </div>
+          </form>
+
+          <div id="feed-pipe-results">
+            <table class="table">
+              <thead>
+                <th class="text-center">Расход на входе, л/с</th>
+                <th class="text-center">Потери давления, м</th>
+                <th class="text-center">Давление на выходе, м</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-center" id="feed-pipe-Q-in">-</td>
+                  <td class="text-center" id="feed-pipe-P-loss">-</td>
+                  <td class="text-center" id="feed-pipe-P-out">-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  
+
+<div class="row" style="width: 100%; margin-top: 30px;">
+  <div class="col-xl-12">
+    <div class="white-box">
+      <h4 class="my-4">Узел управления:</h4>
+
+
+      <div class="gray-box">
+          <table class="table" id="sprinklers-list">
+            <thead>
+              <tr>
+                <th class="">Наименование</th>
+                <th>Модель</th>
+                <th class="text-center">Диаметр, мм</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for unit in control_unit %}
+                <tr data-installation-type="{{ unit.installation_type }}">
+                  <td class=""><input type="radio" name="control-unit" value="{{ unit.id }}" /> {{ unit.control_unit_name.name }}</td>
+                  <td>{{ unit.designation }}</td>
+                  <td class="text-center">{{ unit.diameter }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+  <div class="row" style="width: 100%; display: none;" id="pump-results-block">
+    <div class="col-xl-12">
+      <div class="white-box">
+        <h4 class="my-4">Требуемые параметры насоса:</h4>
+
+        <div class="row my-4">
+          <div class="col-md-6">
+            <div class="row">
+              <label class="col-sm-8 col-form-label">Требуемый напор насоса, м</label>
+              <div class="col-sm-4 align-middle text-bold" id="required-pressure"></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="row">
+              <label class="col-sm-8 col-form-label">Требуемый расход насоса, м³/ч</label>
+              <div class="col-sm-4 align-middle text-bold" id="required-flow"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row my-4">
+          <div class="col-md-12">
+            <h5>Расшифровка расчёта:</h5>
+            <div class="gray-box">
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <td>Давление у диктующего оросителя (Pд)</td>
+                    <td class="text-end" id="calc-detail-pd">-</td>
+                  </tr>
+                  <tr>
+                    <td>Геометрическая высота (Z = H/100)</td>
+                    <td class="text-end" id="calc-detail-z">-</td>
+                  </tr>
+                  <tr>
+                    <td>Потери давления в трубопроводах (ΣΔP)</td>
+                    <td class="text-end" id="calc-detail-pipe-losses">-</td>
+                  </tr>
+                  <tr>
+                    <td>Местные сопротивления (20% от потерь в трубах)</td>
+                    <td class="text-end" id="calc-detail-local-losses">-</td>
+                  </tr>
+                  <tr>
+                    <td>Давление на входе насоса (Pвх)</td>
+                    <td class="text-end" id="calc-detail-inlet">-</td>
+                  </tr>
+                  <tr class="table-active">
+                    <td><strong>Требуемый напор (Pн = Pд + Z + ΣΔP + Pм - Pвх)</strong></td>
+                    <td class="text-end"><strong id="calc-detail-total">-</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="row my-4" style="width: 50%">
+    <div class="col-md-6 d-grid">
+      <button type="button" id="save-results-btn" class="btn btn-primary">Сохранить результаты</button>
+    </div>
+    <div class="col-md-6 d-grid">
+      <a href="/new/" class="btn btn-secondary">Начать новый расчет</a>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  #sprinklers-list tbody tr:hover {
+    background-color: #f0f0f0;
+  }
+</style>
+
+{% endblock %}
