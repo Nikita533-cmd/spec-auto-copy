@@ -125,7 +125,7 @@ class Sprinkler(models.Model):
         """
         intensity = 0
         description = ""
-        k = [self.k0, self.k1, self.k2, self.k3, self.k4, self.k5] #, self.k6, self.k7]
+        k = [self.k0, self.k1, self.k2, self.k3, self.k4, self.k5]#, self.k6, self.k7]
         for i in range(6): #дОБАВИЛ
             intensity += P**i * k[i]
             description += f" + ({P}^{i} * {k[i]}) {i=}"

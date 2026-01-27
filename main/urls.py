@@ -10,10 +10,10 @@ from .urls_api import api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", index),
+    # path("", index),
     path("sprinkler/", include("sprinkler.urls")),
-    path('', views.index, name='index'),
-    path('new/', views.new_view, name='new'),
+    # path('', views.index, name='index'),
+    path('', views.new_view, name='new'),
     path('editor/', views.editor_view, name='editor'),
     path("api/", api.urls),
     path("users/", include("users.urls", namespace="users")),
