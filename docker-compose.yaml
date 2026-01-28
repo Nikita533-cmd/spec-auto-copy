@@ -38,7 +38,7 @@ services:
     volumes:
       - redis-volume:/data
 
-nginx:
+  nginx:
     image: nginx:alpine
     ports:
         - "80:80"     # HTTP → HTTPS редирект
