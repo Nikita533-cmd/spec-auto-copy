@@ -1,0 +1,57 @@
+version: "3.5"
+services:
+  django:
+    build:
+      dockerfile: etc/django.Dockerfile
+      context: .
+    command: uwsgi --http :8000 --processes 2 --threads 4 --module main.wsgi
+    ports:
+      - "8000:8000"
+    environment:
+      - C_FORCE_ROOT=true
+      - DEBUG=False
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DJANGO_ALLOWED_HOSTS=194.156.117.129,localhost
+    volumes:
+      - .:/webapp
+      - ./media:/media
+      - ./static:/webapp/static
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:13
+    ports:
+      - "5432:5432"  # ✅ Открыто
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+    volumes:
+      - postgres-volume:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6.2.4-alpine
+    volumes:
+      - redis-volume:/data
+
+nginx:
+    image: nginx:alpine
+    ports:
+        - "80:80"     # HTTP → HTTPS редирект
+        - "443:443"   # HTTPS
+    volumes:
+        - ./nginx.conf:/etc/nginx/conf.d/default.conf
+        - ./static:/static
+        - ./media:/media
+        - ./ssl:/etc/nginx/ssl  # SSL сертификаты
+    depends_on:
+        - django
+
+volumes:
+  postgres-volume:
+  redis-volume:
+  media:

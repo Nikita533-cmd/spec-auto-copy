@@ -17,7 +17,6 @@ sprinklers.json
 
 media/
 
-/docker-compose.yaml
 frontend/dist/
 
 # Distribution / packaging
